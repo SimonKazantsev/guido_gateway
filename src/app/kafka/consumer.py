@@ -13,7 +13,7 @@ class KafkaClient:
             consumer: AIOKafkaConsumer,
             s3_client: S3Client,
             producer: AIOKafkaProducer,
-        ):
+        ) -> None:
         self._consumer = consumer
         self._s3_client = s3_client
         self._producer = producer
