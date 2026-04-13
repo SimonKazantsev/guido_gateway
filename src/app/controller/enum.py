@@ -1,6 +1,8 @@
 from enum import Enum
-from httpx import TimeoutException, ConnectError
 from http import HTTPStatus
+
+from httpx import ConnectError, TimeoutException
+
 
 class AppErrorCode(Enum):
     # Клиентские ошибки

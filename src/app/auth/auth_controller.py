@@ -1,10 +1,10 @@
 
-from fastapi import Request
+from app.auth.schema import AuthRequest
 
 from app.controller.abstract import AbstractAuthProcesser
 
 
-class AuthController:
+class AuthController(AbstractController):
     """Контроллер Аутентификации.
     Отвечает за процедуры аутентификации, регистрицию и вход.
     """
@@ -12,6 +12,6 @@ class AuthController:
     def __init__(self, processers: dict[AbstractAuthProcesser]) -> None:
         self._processers = processers
 
-    async def process(self, path: str, request: Request):
+    async def process(self, path: str, auth_request: AuthRequest):
         """Обработка запроса"""
-        return await self._processer['path'].handle(request)
+        return await self._processer[path].handle(auth_request)
