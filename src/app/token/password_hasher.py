@@ -4,7 +4,7 @@ from pwdlib import PasswordHash
 class PasswordHasher:
     """Занимается хэшированием паролей."""
 
-    def __init__(self,):
+    def __init__(self,) -> None:
         self._password_hash:PasswordHash = PasswordHash.recommended()
 
     def verify_password(self, password: str, hashed_password: str) -> bool:
