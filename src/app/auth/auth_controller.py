@@ -1,7 +1,6 @@
 
 from app.auth.schema import AuthRequest
-
-from app.controller.abstract import AbstractAuthProcesser
+from app.controller.abstract import AbstractController
 
 
 class AuthController(AbstractController):
@@ -9,7 +8,7 @@ class AuthController(AbstractController):
     Отвечает за процедуры аутентификации, регистрицию и вход.
     """
 
-    def __init__(self, processers: dict[AbstractAuthProcesser]) -> None:
+    def __init__(self, processers: dict) -> None:
         self._processers = processers
 
     async def process(self, path: str, auth_request: AuthRequest):

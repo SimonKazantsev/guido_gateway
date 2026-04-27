@@ -1,11 +1,17 @@
 from contextlib import asynccontextmanager
-
+import httpx
+from fastapi.responses import JSONResponse
 from dependency_injector.wiring import inject
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from app.containers import ApplicationContainer
-from app.middlewares.middleware import AuthMiddleware
 
+from app.containers import ApplicationContainer
+
+ROUTES: dict[str, str] = {
+    "auth": "http://localhost:8001",      # /auth/* -> auth service
+}
+PUBLIC_PATHS = {
+    "auth": ["/auth/login", "/auth/register", "/auth/refresh"],
+}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,17 +21,18 @@ async def lifespan(app: FastAPI):
     container.shutdown_resources()
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(AuthMiddleware, public_paths = [], token_verifier = None)
-
-services = ['auth', 'transcribe', 'status']
-
-@app.api_route("/{service}/{path:path}", methods=["POST"])
-@inject
+@app.api_route("/{service}/{path:path}", methods=['POST'])
 async def gateway(
         request: Request,
         service: str,
         path: str,
+        json: dict,
     ):
-    return JSONResponse(status_code=404, content={"detail": "service not found"})
     """Перенаправление запроса в соответствующий микросервис."""
-
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method=request.method,
+            url=f'{ROUTES[service]}/{path}',
+            json=json,
+        )
+        return response.request
