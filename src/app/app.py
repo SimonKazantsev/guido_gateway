@@ -21,6 +21,8 @@ async def lifespan(app: FastAPI):
     container.shutdown_resources()
 
 app = FastAPI(lifespan=lifespan)
+
+
 @app.api_route("/{service}/{path:path}", methods=['POST'])
 async def gateway(
         request: Request,
@@ -36,3 +38,9 @@ async def gateway(
             json=json,
         )
         return response.request
+
+
+@app.post("/status")
+async def check_task_status(task_id: int):
+    """Проверка статуса задачи."""
+    return task_id # Пока что выступает в качестве заглушки
