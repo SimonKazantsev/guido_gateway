@@ -84,24 +84,44 @@ async def handle_access(
     call_next: Callable,
     token_verifier: TokenVerifier = Depends(Provide[ApplicationContainer.token_verifier]),
 ):
-    service = request.url.path.split('/')[1]
-    path = request.url.path.split('/')[2]
-    if service not in SERVICE.keys():
-        return JSONResponse(
-            status_code=HTTPStatus.NOT_FOUND,
-            content={"reason": HTTPStatus.NOT_FOUND.phrase},
-    )
-    if path not in PATHS[service]:
-        return JSONResponse(
-            status_code=HTTPStatus.NOT_FOUND,
-            content={"reason": HTTPStatus.NOT_FOUND.phrase},
-    )
-    try:
-        #token = request.headers.get("Authorization").split(' ')[:-1]  # Authorization: Bearer token_here
-        token_verifier.verify_token('token')
+    if request.url.path in PUBLIC_PATHS:
         return await call_next(request)
+
+    parts = request.url.path.strip("/").split("/")
+    if len(parts) < 2:
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={"reason": "Invalid path format"},
+        )
+    service, path = parts[0], "/".join(parts[1:])
+
+    if service not in SERVICE:
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={"reason": f"Service '{service}' not found"},
+        )
+
+    allowed_paths = PATHS.get(service, [])
+    if not any(path == allowed or path.startswith(allowed + "/") for allowed in allowed_paths):
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={"reason": f"Path '{path}' not allowed for service '{service}'"},
+        )
+
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return JSONResponse(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            content={"reason": "Missing or invalid Authorization header"},
+        )
+    token = auth_header.split(" ")[1]
+
+    try:
+        token_verifier.verify_token(token)
     except jwt.InvalidTokenError:
         return JSONResponse(
             status_code=HTTPStatus.UNAUTHORIZED,
-            content={"reason": HTTPStatus.UNAUTHORIZED.phrase},
+            content={"reason": "Invalid or expired token"},
         )
+
+    return await call_next(request)
