@@ -18,10 +18,15 @@ class PublicTokenConfig(BaseModel):
     public_token_path: str
 
 
+class KafkaConfig(BaseModel):
+    process_link_topic: str
+
+
 class AppConfig(BaseModel):
     retry_strategy: RetryConfig
     storage: StorageConfig
     public_token: PublicTokenConfig
+    kafka: KafkaConfig
 
 
 def load_config(config_path: str = "config.yaml"):

@@ -6,7 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 from app.containers import ApplicationContainer
-from app.controller.enum import PUBLIC_PATHS, SERVICE, PATHS 
+from app.controller.enum import PUBLIC_PATHS, SERVICE, PATHS
 
 
 @inject
@@ -52,10 +52,10 @@ async def handle_access(
             content={"reason": "Missing or invalid Authorization header"},
         )
     token = auth_header.split(" ")[1]
-    request.state.token = token
 
     try:
-        token_verifier.verify_token(token)
+        token_payload = token_verifier.verify_token(token)
+        request.state.user_id = token_payload["user_id"]
     except jwt.InvalidTokenError:
         return JSONResponse(
             status_code=HTTPStatus.UNAUTHORIZED,

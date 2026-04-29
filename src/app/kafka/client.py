@@ -1,27 +1,26 @@
-import asyncio
 import json
-
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, ConsumerRecord
-
-from src.app.s3.client.client import S3Client
+from app.config import KafkaConfig
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
 
 class KafkaClient:
     def __init__(
         self,
         consumer: AIOKafkaConsumer,
-        s3_client: S3Client,
         producer: AIOKafkaProducer,
+        config: KafkaConfig,
     ) -> None:
+        self._config = config
         self._consumer = consumer
-        self._s3_client = s3_client
         self._producer = producer
 
-    async def process_message(self, message: ConsumerRecord):
-        payload = json.loads(message.value.decode())
-        await self._s3_client.get_object(key=payload["file_key"])
-        return "output.pdf"
+    async def send_message(self, message_payload: dict) -> str:
+        """Отправляет сообщение в очередь."""
+        await self._producer.send(
+            topic=self._config.process_link_topic,
+            value=json.dumps(message_payload)
+        )
 
-    async def process_queue(self):
-        async for message in self._consumer:
-            return await asyncio.create_task(self.process_message(message))
+    @property
+    def process_link_topic(self):
+        return self._config.process_link_topic
