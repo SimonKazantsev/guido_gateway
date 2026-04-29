@@ -13,21 +13,3 @@ class AbstractController(ABC):
 
     @abstractmethod
     async def handle(self, request: Request) -> Response: ...
-
-
-class AuthController(AbstractController):
-    """Контроллер аутентификации."""
-
-    async def handle(self, request: Request) -> Response: ...
-
-
-class RegisterController(AuthController):
-    """Контроллер регистрации."""
-
-    async def handle(self, request: Request) -> Response: ...
-
-
-class LoginController(AuthController):
-    """Контроллер входа в систему."""
-
-    async def handle(self, request: Request) -> Response: ...

@@ -1,10 +1,10 @@
-import os
-
+from app.config import load_config
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
 from app.token.token import TokenVerifier
-from app.key import read_public_key
 from app.s3.client.client import S3Client
+from app.htttp_client.client import HTTPClient
+from app.controller.auth import AuthController
 
 load_dotenv()
 
@@ -12,22 +12,20 @@ load_dotenv()
 class ApplicationContainer(containers.DeclarativeContainer):
     """Контейнер с различными зависимостями приложения."""
 
-    wiring_config = containers.WiringConfiguration(
-        packages=["app"]
-    )
+    config = load_config()
+    wiring_config = containers.WiringConfiguration(packages=["app"])
 
-    s3_client = providers.Resource(
-        S3Client,
-        access_key=os.getenv("ACCESS_KEY"),
-        secret_key=os.getenv("SECRET_KEY"),
-        endpoint_url=os.getenv("ENDPOINT_URL"),
-        bucket_name=os.getenv("BUCKET_NAME"),
-    )
+    http_client = providers.Resource(HTTPClient, config.retry_strategy)
+
+    s3_client = providers.Resource(S3Client, config.storage)
 
     token_verifier = providers.Resource(
         TokenVerifier,
-        public_key=read_public_key(),
-        algorithm=["RS256"],
+        config.public_token,
     )
 
-    controllers = 1
+    auth_controller = providers.Resource(
+        AuthController,
+        http_client,
+    )
+    controllers = providers.List(auth_controller)

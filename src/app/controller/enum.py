@@ -37,3 +37,28 @@ EXCEPTION_TO_ERROR_CODE = {
     TimeoutException: AppErrorCode.TIMEOUT,
     ConnectError: AppErrorCode.CONNECTION_ERROR,
 }
+
+SERVICE: dict[str, str] = {
+    "auth": "http://localhost:8001",  # /auth/* -> auth service
+    "transcribe": "http://localhost:8002",
+}
+PATHS = {
+    "transcribe": ["process-link", "process-file"],
+    "auth": [
+        "login",
+        "logout",
+        "register",
+        "refresh",
+        "delete",
+        "change-password",
+        "check-username",
+    ],
+}
+PUBLIC_PATHS = [
+    "/",
+    "/auth/login",
+    "/auth/register",
+    "/auth/refresh",
+    "/docs",
+    "/openapi.json",
+]
