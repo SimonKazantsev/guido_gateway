@@ -7,10 +7,13 @@ from app.s3.client.client import S3Client
 
 load_dotenv()
 
+
 class ApplicationContainer(containers.DeclarativeContainer):
     """Контейнер с различными зависимостями приложения."""
 
-    wiring_config = containers.WiringConfiguration(packages=['app'], modules=['app.containers'])
+    wiring_config = containers.WiringConfiguration(
+        packages=["app"], modules=["app.containers"]
+    )
 
     s3_client = providers.Resource(
         S3Client,

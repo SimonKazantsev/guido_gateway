@@ -1,4 +1,3 @@
-
 from app.auth.schema import AuthRequest
 from app.controller.abstract import AbstractController
 

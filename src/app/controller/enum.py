@@ -10,15 +10,15 @@ class AppErrorCode(Enum):
     NOT_FOUND = ("NOT_FOUND", HTTPStatus.NOT_FOUND)
     CONFLICT = ("CONFLICT", HTTPStatus.CONFLICT)
     UNPROCESSABLE = ("UNPROCESSABLE", HTTPStatus.UNPROCESSABLE_ENTITY)
-    
+
     # Серверные ошибки
     INTERNAL_ERROR = ("INTERNAL_ERROR", HTTPStatus.INTERNAL_SERVER_ERROR)
     SERVICE_UNAVAILABLE = ("SERVICE_UNAVAILABLE", HTTPStatus.SERVICE_UNAVAILABLE)
-    
+
     # Сетевые ошибки
     TIMEOUT = ("TIMEOUT", HTTPStatus.GATEWAY_TIMEOUT)
     CONNECTION_ERROR = ("CONNECTION_ERROR", HTTPStatus.BAD_GATEWAY)
-    
+
     def __init__(self, msg: str, http_status: HTTPStatus):
         self.msg = msg
         self.http_status = http_status
