@@ -22,7 +22,7 @@ class S3Client:
         async with self.session.create_client(
             "s3",
             aws_access_key_id=self._config.access_key,
-            aws_secret_access_key_id=self._config.secret_key,
+            aws_secret_access_key=self._config.secret_key,
             endpoint_url=self._config.endpoint_url,
         ) as client:
             yield client
@@ -45,6 +45,19 @@ class S3Client:
                 data = await stream.read()
                 async with aiofiles.open(key, "wb") as file:
                     await file.write(data)
+
+    async def get_presigned_url(self, key: str) -> str | None:
+        """Получить ссылку за прямой загрузки файла в хранилище."""
+        async with self._get_client() as client:
+            presigned_url = await client.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={
+                    'Bucket': self._config.bucket_name,
+                    'Key': key
+                },
+                ExpiresIn=self._config.presigned_url_expires_seconds
+            )
+            return presigned_url
 
     async def is_healthy(self) -> bool:
         """Проверка работоспособности Файловой БД."""

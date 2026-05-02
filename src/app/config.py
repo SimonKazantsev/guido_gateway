@@ -11,6 +11,7 @@ class StorageConfig(BaseModel):
     secret_key: str
     bucket_name: str
     endpoint_url: str
+    presigned_url_expires_seconds: int
 
 
 class PublicTokenConfig(BaseModel):

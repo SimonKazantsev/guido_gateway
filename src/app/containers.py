@@ -1,6 +1,7 @@
 from app.config import load_config, RedisConfig
 from app.redis.redis import RedisClient
 from redis import StrictRedis
+from functools import partial
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
 from app.token.token import TokenVerifier
@@ -24,7 +25,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     s3_client = providers.Resource(S3Client, config.storage)
 
-    _redis = prepare_redis(config.redis)
+    _redis = partial(prepare_redis, config.redis)
 
     redis_client = providers.Resource(
         RedisClient,
