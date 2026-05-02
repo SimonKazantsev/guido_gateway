@@ -1,7 +1,7 @@
 from app.controller.abstract import AbstractController
 from fastapi import Request, Response
 import httpx
-from app.controller.enum import SERVICE
+from src.app.enum import SERVICE
 
 
 class AuthController(AbstractController):

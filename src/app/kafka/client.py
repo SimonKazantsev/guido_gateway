@@ -17,8 +17,7 @@ class KafkaClient:
     async def send_message(self, message_payload: dict) -> str:
         """Отправляет сообщение в очередь."""
         await self._producer.send(
-            topic=self._config.process_link_topic,
-            value=json.dumps(message_payload)
+            topic=self._config.process_link_topic, value=json.dumps(message_payload)
         )
 
     @property

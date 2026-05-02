@@ -1,10 +1,11 @@
+from app.redis.redis import RedisClient
 from contextlib import asynccontextmanager
 import httpx
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
 from fastapi import FastAPI, Request, Depends
 from app.containers import ApplicationContainer
-from app.controller.enum import SERVICE
+from src.app.enum import SERVICE
 
 
 @asynccontextmanager
@@ -31,18 +32,20 @@ async def gateway(
 ):
     """Перенаправление запроса в соответствующий микросервис."""
     controller = controllers[service]
-    await controller.handle(request)
-    async with httpx.AsyncClient() as client:
-        response = await client.request(
-            method=request.method,
-            url=f"{SERVICE[service]}/{path}",
-            json=json,
-            headers={"Authorization": f"Bearer {json['token']}"},
-        )
-        return response.request
+    return await controller.handle(request)
 
 
 @app.post("/status")
 async def check_task_status(task_id: int):
     """Проверка статуса задачи."""
     return task_id  # Пока что выступает в качестве заглушки
+
+
+@app.delete("/task")
+@inject
+async def cancel_task(
+    task_id: int,
+    redis_client: RedisClient = Depends(Provide[ApplicationContainer.redis_client]),
+) -> None:
+    """Удаление задачи на обработку."""
+    redis_client.cancel_task(task_id)

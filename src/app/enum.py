@@ -4,6 +4,15 @@ from http import HTTPStatus
 from httpx import ConnectError, TimeoutException
 
 
+class TaskStatusesEnum(Enum):
+    """Статусы задачи."""
+
+    pending = "pending"
+    processed = "processed"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
 class AppErrorCode(Enum):
     # Клиентские ошибки
     BAD_REQUEST = ("BAD_REQUEST", HTTPStatus.BAD_REQUEST)

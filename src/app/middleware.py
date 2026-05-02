@@ -6,7 +6,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 from app.containers import ApplicationContainer
-from app.controller.enum import PUBLIC_PATHS, SERVICE, PATHS
+from src.app.enum import PUBLIC_PATHS, SERVICE, PATHS
 
 
 @inject

@@ -22,11 +22,17 @@ class KafkaConfig(BaseModel):
     process_link_topic: str
 
 
+class RedisConfig(BaseModel):
+    host: str
+    port: int
+
+
 class AppConfig(BaseModel):
     retry_strategy: RetryConfig
     storage: StorageConfig
     public_token: PublicTokenConfig
     kafka: KafkaConfig
+    redis: RedisConfig
 
 
 def load_config(config_path: str = "config.yaml"):
