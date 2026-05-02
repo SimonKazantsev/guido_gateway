@@ -6,25 +6,36 @@ import uuid
 from app.enum import TaskStatusesEnum
 from app.redis.redis import RedisClient
 from app.kafka.client import KafkaClient
+from app.s3.client.client import S3Client
 
 
 class ProcessLinkRequest(BaseModel):
     url: HttpUrl
+    user_id: int
 
 
 class ProcessFileRequest(BaseModel):
+    user_id: int
     filename: str
     size: int
     mime_type: str
 
 
+class ProcessFileResponse(BaseModel):
+    presigned_url: str
+    task_id: uuid.UUID
+
+
 class TranscribeController(AbstractController):
     """Отвечает за обработку запроса транскрибации аудио в ноты."""
 
-    def __init__(self, kafka_client: KafkaClient, redis_client: RedisClient) -> None:
+    def __init__(
+        self, kafka_client: KafkaClient, redis_client: RedisClient, s3_client: S3Client
+    ) -> None:
         super().__init__()
         self._kafka_client = kafka_client
         self._redis_client = redis_client
+        self._s3_client = s3_client
 
     async def handle(self, request: Request) -> Response:
         dispatch = {
@@ -57,12 +68,24 @@ class TranscribeController(AbstractController):
             )
         except Exception:
             return JSONResponse(500, {"error": "Broker error"})
-        self._redis_client.create_task(task_id, TaskStatusesEnum.pending)
+        self._redis_client.create_task(
+            user_id=data.user_id, task_id=task_id, task_status=TaskStatusesEnum.pending
+        )
         return JSONResponse(202, {"task_id": task_id, "status": "accepted"})
 
-    async def _process_file(self, request: Request) -> str:
+    async def _process_file(self, request: Request) -> ProcessFileResponse:
         try:
             body = await request.json()
             data = ProcessFileRequest(**body)
         except (ValueError, ValidationError) as e:
             return JSONResponse(400, {"error": str(e)})
+        task_id = uuid.uuid4()
+        presigned_url = await self._s3_client.get_presigned_url(
+            task_id=task_id, key=data.filename
+        )
+        self._redis_client.create_task(
+            user_id=data.user_id,
+            task_id=task_id,
+            task_status=TaskStatusesEnum.awaiting_upload.value,
+        )
+        return ProcessFileResponse(presigned_url=presigned_url, task_id=task_id)

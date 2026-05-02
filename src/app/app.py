@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from app.redis.redis import RedisClient
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
@@ -25,7 +26,6 @@ async def gateway(
     request: Request,
     service: str,
     path: str,
-    json: dict,
     controllers: list[AbstractController] = Depends(
         Provide[ApplicationContainer.controllers]
     ),  # noqa: E501
@@ -55,10 +55,27 @@ async def cancel_task(
 @inject
 async def get_presigned_url(
     key: str,
-    s3_client: S3Client = Depends(
-    Provide[ApplicationContainer.s3_client]
-    )
+    s3_client: S3Client = Depends(Provide[ApplicationContainer.s3_client])
 ) -> str | None:
     """Проверка статуса задачи."""
     presigned_url = await s3_client.get_presigned_url(key)
     return presigned_url
+
+
+class UploadStatusRequest(BaseModel):
+    task_id: str
+    filename: str
+    file_size: int
+    mime_type: str
+
+
+@app.post("/upload_status")
+@inject
+async def fetch_upload_status(
+    request: Request,
+    upload_status_request: UploadStatusRequest,
+    redis_client: RedisClient = Depends(Provide[ApplicationContainer.redis_client]),
+):
+    task = redis_client.get_task(upload_status_request.task_id)
+    if task.user_id != request.state.user_id:
+        return

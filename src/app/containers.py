@@ -30,6 +30,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     redis_client = providers.Resource(
         RedisClient,
         _redis,
+        config.redis,
     )
 
     token_verifier = providers.Resource(

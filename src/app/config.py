@@ -26,6 +26,7 @@ class KafkaConfig(BaseModel):
 class RedisConfig(BaseModel):
     host: str
     port: int
+    ttl_seconds: int
 
 
 class AppConfig(BaseModel):

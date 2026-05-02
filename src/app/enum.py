@@ -11,6 +11,8 @@ class TaskStatusesEnum(Enum):
     processed = "processed"
     completed = "completed"
     cancelled = "cancelled"
+    awaiting_upload = "awaiting_upload"
+    frontend_notified = "frontend_notified"
 
 
 class AppErrorCode(Enum):
