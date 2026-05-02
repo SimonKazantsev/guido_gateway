@@ -6,7 +6,6 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import FastAPI, Request, Depends
 from app.containers import ApplicationContainer
 from app.s3.client.client import S3Client
-from src.app.enum import SERVICE
 
 
 @asynccontextmanager
@@ -54,8 +53,7 @@ async def cancel_task(
 @app.post("/presigned_url")
 @inject
 async def get_presigned_url(
-    key: str,
-    s3_client: S3Client = Depends(Provide[ApplicationContainer.s3_client])
+    key: str, s3_client: S3Client = Depends(Provide[ApplicationContainer.s3_client])
 ) -> str | None:
     """Проверка статуса задачи."""
     presigned_url = await s3_client.get_presigned_url(key)

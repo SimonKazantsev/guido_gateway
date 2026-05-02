@@ -84,6 +84,7 @@ class TranscribeController(AbstractController):
             task_id=task_id, key=data.filename
         )
         self._redis_client.create_task(
+            file_url=presigned_url,
             user_id=data.user_id,
             task_id=task_id,
             task_status=TaskStatusesEnum.awaiting_upload.value,

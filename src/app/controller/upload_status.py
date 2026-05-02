@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Request
 from app.s3.client.client import S3Client
 from http import HTTPStatus
-from app.redis.redis import RedisClient, RedisTask
+from app.redis.redis import RedisClient
 from app.enum import TaskStatusesEnum
 
 
@@ -37,3 +37,11 @@ class UploadStatusController:
             )
         task.frontend_callback_received = True
         task.task_status = TaskStatusesEnum.frontend_notified.value
+        await self._broker.send_message(
+            queue="file_processing",
+            message={
+                "task_id": task.task_id,
+                "user_id": task.user_id,
+                "file_key": task.file_key,
+            },
+        )
