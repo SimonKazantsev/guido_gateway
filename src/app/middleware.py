@@ -1,12 +1,8 @@
 import jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.token.token import TokenVerifier
-from typing import Callable
 from http import HTTPStatus
-from dependency_injector.wiring import inject, Provide
-from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
-from app.containers import ApplicationContainer
 from src.app.enum import PUBLIC_PATHS, SERVICE, PATHS
 
 
@@ -16,6 +12,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
         self._token_verifier = token_verifier
 
     async def dispatch(self, request, call_next):
+        print(request.url.path)
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
@@ -54,8 +51,11 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 content={"reason": "Missing or invalid Authorization header"},
             )
         token = auth_header.split(" ")[1]
-
         try:
+            if request.url.path == "s3-webhook":
+                if token != self._token_verifier.webhook_token:
+                    raise jwt.InvalidTokenError
+                return await call_next(request)
             token_payload = self._token_verifier.verify_token(token)
             if token_payload:
                 request.state.user_id = token_payload["user_id"]

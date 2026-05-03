@@ -17,6 +17,7 @@ class StorageConfig(BaseModel):
 class PublicTokenConfig(BaseModel):
     algorithm: list[str]
     public_token_path: str
+    webhook_token: str
 
 
 class KafkaConfig(BaseModel):

@@ -23,6 +23,11 @@ class TokenVerifier:
     def __init__(self, token_config: PublicTokenConfig):
         self._key = read_public_key(token_config.public_token_path)
         self._algorithm = token_config.algorithm
+        self._webhook_token = token_config.webhook_token
 
     def verify_token(self, token: str) -> dict[str, Any]:
         return jwt.decode(token, key=self._key, algorithms=self._algorithm)
+
+    @property
+    def webhook_token(self):
+        self._webhook_token

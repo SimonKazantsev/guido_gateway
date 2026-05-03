@@ -1,8 +1,6 @@
 from pydantic import BaseModel
 from app.redis.redis import RedisClient
 from app.middleware import TokenMiddleware
-from app.extractor.webhook import WebhookExtractor
-from app.token.token import TokenVerifier
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide

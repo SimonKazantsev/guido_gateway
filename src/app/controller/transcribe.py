@@ -1,7 +1,7 @@
 from app.controller.abstract import AbstractController
 from fastapi.responses import JSONResponse
 from fastapi import Request, Response
-from pydantic import ValidationError, BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl
 import uuid
 from app.enum import TaskStatusesEnum
 from app.redis.redis import RedisClient
