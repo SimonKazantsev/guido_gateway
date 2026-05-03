@@ -23,6 +23,7 @@ class KafkaConfig(BaseModel):
     process_link_topic: str
     outbox_topic: str
 
+
 class RedisConfig(BaseModel):
     host: str
     port: int

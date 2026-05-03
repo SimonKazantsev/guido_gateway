@@ -56,7 +56,9 @@ class TranscribeController(AbstractController):
             "status": TaskStatusesEnum.pending.value,
         }
         self._redis_client.create_task(
-            user_id=request.user_id, task_id=task_id, task_status=TaskStatusesEnum.pending
+            user_id=request.user_id,
+            task_id=task_id,
+            task_status=TaskStatusesEnum.pending,
         )
         await self._kafka_client.send_message(
             self._kafka_client.process_link_topic,

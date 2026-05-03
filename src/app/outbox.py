@@ -25,7 +25,9 @@ class OutboxManager:
 
             event = json.loads(event_json)
             try:
-                await self._kafka_client._producer.send(self._kafka_client.outbox_topic, value=event)
+                await self._kafka_client._producer.send(
+                    self._kafka_client.outbox_topic, value=event
+                )
                 self._redis_client._redis.lrem("outbox:processing", 1, event_json)
                 print(f"Published event {event['event_id']}")
             except Exception as e:
@@ -33,11 +35,15 @@ class OutboxManager:
                 self._redis_client._redis.rpush("outbox", event_json)
                 self._redis_client._redis.lrem("outbox:processing", 1, event_json)
                 await asyncio.sleep(5)
-    
-    def _recover_processing(self,):
+
+    def _recover_processing(
+        self,
+    ):
         """Перенести все сообщения из outbox:processing обратно в outbox при старте."""
         while True:
-            event_json = self._redis_client._redis.rpoplpush("outbox:processing", "outbox", timeout=0)
+            event_json = self._redis_client._redis.rpoplpush(
+                "outbox:processing", "outbox", timeout=0
+            )
             if not event_json:
                 break
             print(f"Recovered orphaned event from processing: {event_json}")

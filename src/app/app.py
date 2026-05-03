@@ -79,8 +79,9 @@ async def fetch_upload_status(
     if task.user_id != request.state.user_id:
         return
 
+
 @app.post("/s3-webhook")
 async def process_webhook(
     request: Request,
 ):
-    print(request)
+    print(await request.json())
