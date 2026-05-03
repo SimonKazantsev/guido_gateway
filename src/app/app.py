@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from app.redis.redis import RedisClient
+from app.middleware import TokenMiddleware
 from app.extractor.webhook import WebhookExtractor
+from app.token.token import TokenVerifier
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
@@ -8,16 +10,18 @@ from fastapi import FastAPI, Request, Depends
 from app.containers import ApplicationContainer
 from app.s3.client.client import S3Client
 
+container = ApplicationContainer()
+container.init_resources()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    container = ApplicationContainer()
-    container.init_resources()
     yield
     container.shutdown_resources()
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier)
 
 
 @inject
