@@ -59,7 +59,7 @@ class TranscribeController(AbstractController):
             "task_id": task_id,
             "url": str(data.url),
             "user_id": request.state.user_id,
-            "status": "pending",
+            "status": TaskStatusesEnum.pending.value,
         }
         try:
             await self._kafka_client.send_message(
@@ -82,6 +82,16 @@ class TranscribeController(AbstractController):
         task_id = uuid.uuid4()
         presigned_url = await self._s3_client.get_presigned_url(
             task_id=task_id, key=data.filename
+        )
+        message_payload = {
+            "task_id": task_id,
+            "url": str(),
+            "user_id": request.state.user_id,
+            "status": TaskStatusesEnum.pending.value,
+        }
+        await self._kafka_client.send_message(
+            self._kafka_client.process_link_topic,
+            message_payload,
         )
         self._redis_client.create_task(
             file_url=presigned_url,

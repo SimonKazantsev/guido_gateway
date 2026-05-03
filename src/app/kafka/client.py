@@ -23,3 +23,7 @@ class KafkaClient:
     @property
     def process_link_topic(self):
         return self._config.process_link_topic
+    
+    @property
+    def outbox_topic(self):
+        return self._config.outbox_topic
