@@ -4,7 +4,8 @@ from app.middleware import TokenMiddleware
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.containers import ApplicationContainer
 from app.s3.client.client import S3Client
 
@@ -19,7 +20,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier)
+security = HTTPBearer()
+app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier())
 
 
 @inject
@@ -37,13 +39,13 @@ async def gateway(
     return await controller.handle(request)
 
 
-@app.post("/status")
+@app.post("/task/status")
 async def check_task_status(task_id: int):
     """Проверка статуса задачи."""
     return task_id  # Пока что выступает в качестве заглушки
 
 
-@app.delete("/task")
+@app.delete("/task/cancel")
 @inject
 async def cancel_task(
     task_id: int,
@@ -53,7 +55,7 @@ async def cancel_task(
     redis_client.cancel_task(task_id)
 
 
-@app.post("/presigned_url")
+@app.post("/file/presigned_url")
 @inject
 async def get_presigned_url(
     key: str, s3_client: S3Client = Depends(Provide[ApplicationContainer.s3_client])
@@ -70,7 +72,7 @@ class UploadStatusRequest(BaseModel):
     mime_type: str
 
 
-@app.post("/upload_status")
+@app.post("/task/upload_status")
 @inject
 async def fetch_upload_status(
     request: Request,
@@ -82,8 +84,8 @@ async def fetch_upload_status(
         return
 
 
-@app.post("/s3-webhook")
+@app.post("/file/s3-webhook")
 async def process_webhook(
-    request: Request,
+    request: Request, credentials: HTTPAuthorizationCredentials = Security(security)
 ):
     print(await request.json())

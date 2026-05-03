@@ -12,7 +12,6 @@ class TokenMiddleware(BaseHTTPMiddleware):
         self._token_verifier = token_verifier
 
     async def dispatch(self, request, call_next):
-        print(request.url.path)
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
@@ -52,7 +51,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
             )
         token = auth_header.split(" ")[1]
         try:
-            if request.url.path == "s3-webhook":
+            if request.url.path == "/file/s3-webhook":
                 if token != self._token_verifier.webhook_token:
                     raise jwt.InvalidTokenError
                 return await call_next(request)

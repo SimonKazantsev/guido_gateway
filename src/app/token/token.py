@@ -30,4 +30,4 @@ class TokenVerifier:
 
     @property
     def webhook_token(self):
-        self._webhook_token
+        return self._webhook_token
