@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from app.redis.redis import RedisClient
+from app.extractor.webhook import WebhookExtractor
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
@@ -77,3 +78,9 @@ async def fetch_upload_status(
     task = redis_client.get_task(upload_status_request.task_id)
     if task.user_id != request.state.user_id:
         return
+
+@app.post("/s3-webhook")
+async def process_webhook(
+    request: Request,
+):
+    print(request)

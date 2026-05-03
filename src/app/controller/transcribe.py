@@ -47,55 +47,31 @@ class TranscribeController(AbstractController):
             return JSONResponse(404, {"error": "Unknown action"})
         return await handler(request)
 
-    async def _process_link(self, request: Request) -> Response:
-        try:
-            body = await request.json()
-            data = ProcessLinkRequest(**body)
-        except (ValueError, ValidationError) as e:
-            return JSONResponse(400, {"error": str(e)})
-
+    async def _process_link(self, request: ProcessLinkRequest) -> Response:
         task_id = str(uuid.uuid4())
         message_payload = {
             "task_id": task_id,
-            "url": str(data.url),
-            "user_id": request.state.user_id,
+            "url": str(request.url),
+            "user_id": request.user_id,
             "status": TaskStatusesEnum.pending.value,
         }
-        try:
-            await self._kafka_client.send_message(
-                self._kafka_client.process_link_topic,
-                message_payload,
-            )
-        except Exception:
-            return JSONResponse(500, {"error": "Broker error"})
         self._redis_client.create_task(
-            user_id=data.user_id, task_id=task_id, task_status=TaskStatusesEnum.pending
+            user_id=request.user_id, task_id=task_id, task_status=TaskStatusesEnum.pending
         )
-        return JSONResponse(202, {"task_id": task_id, "status": "accepted"})
-
-    async def _process_file(self, request: Request) -> ProcessFileResponse:
-        try:
-            body = await request.json()
-            data = ProcessFileRequest(**body)
-        except (ValueError, ValidationError) as e:
-            return JSONResponse(400, {"error": str(e)})
-        task_id = uuid.uuid4()
-        presigned_url = await self._s3_client.get_presigned_url(
-            task_id=task_id, key=data.filename
-        )
-        message_payload = {
-            "task_id": task_id,
-            "url": str(),
-            "user_id": request.state.user_id,
-            "status": TaskStatusesEnum.pending.value,
-        }
         await self._kafka_client.send_message(
             self._kafka_client.process_link_topic,
             message_payload,
         )
+        return JSONResponse(202, {"task_id": task_id, "status": "accepted"})
+
+    async def _process_file(self, request: ProcessFileRequest) -> ProcessFileResponse:
+        task_id = uuid.uuid4()
+        presigned_url = await self._s3_client.get_presigned_url(
+            task_id=task_id, key=request.filename
+        )
         self._redis_client.create_task(
             file_url=presigned_url,
-            user_id=data.user_id,
+            user_id=request.user_id,
             task_id=task_id,
             task_status=TaskStatusesEnum.awaiting_upload.value,
         )

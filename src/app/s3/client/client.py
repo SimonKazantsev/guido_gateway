@@ -24,6 +24,7 @@ class S3Client:
             aws_access_key_id=self._config.access_key,
             aws_secret_access_key=self._config.secret_key,
             endpoint_url=self._config.endpoint_url,
+            verify=False, # MINIO, локальное объектное хранилище.
         ) as client:
             yield client
 
