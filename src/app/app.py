@@ -30,12 +30,15 @@ app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier())
 @inject
 async def gateway(
     request: Request,
+    service: str, 
+    path: str,
+    json: dict,
     auth_controller: AbstractController = Depends(
         Provide[ApplicationContainer.auth_controller]
     ),  # noqa: E501
 ):
     """Перенаправление запроса в соответствующий микросервис."""
-    return await auth_controller.handle(request)
+    return await auth_controller.handle(request=request, json=json)
 
 
 @app.post("/task/status")
