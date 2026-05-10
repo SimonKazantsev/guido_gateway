@@ -12,6 +12,19 @@ class TokenMiddleware(BaseHTTPMiddleware):
         self._token_verifier = token_verifier
 
     async def dispatch(self, request, call_next):
+        print(request)
+        if request.url.path == "/s3-webhook":
+            auth_header = request.headers.get("Authorization")
+            if not auth_header or not auth_header.startswith("Bearer "):
+                return JSONResponse(
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                    content={"reason": "Missing or invalid Authorization header"},
+                )
+            token = auth_header.split(" ")[1]
+            if token != self._token_verifier.webhook_token:
+                raise jwt.InvalidTokenError
+            request.state.service = "s3-webhook"
+            return await call_next(request)
         parts = request.url.path.strip("/").split("/")
         service, path = parts[0], "/".join(parts[1:])
         request.state.service = service
@@ -24,6 +37,7 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 status_code=HTTPStatus.NOT_FOUND,
                 content={"reason": "Invalid path format"},
             )
+        
         request.state.service = service
         request.state.path = path
 

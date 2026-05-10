@@ -23,6 +23,7 @@ class PublicTokenConfig(BaseModel):
 class KafkaConfig(BaseModel):
     process_link_topic: str
     outbox_topic: str
+    bootstrap_servers: str
 
 
 class RedisConfig(BaseModel):

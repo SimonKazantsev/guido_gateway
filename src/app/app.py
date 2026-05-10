@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from app.redis.redis import RedisClient
 from app.middleware import TokenMiddleware
+from app.htttp_client.client import HTTPClient
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
@@ -29,13 +30,12 @@ app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier())
 @inject
 async def gateway(
     request: Request,
-    auth_controller: AbstractController = Depends(
-        Provide[ApplicationContainer.auth_controller]
-    ),  # noqa: E501
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    controllers: dict[str, AbstractController] = Depends(Provide[ApplicationContainer.controllers])
 ):
     """Перенаправление запроса в соответствующий микросервис."""
-    return await auth_controller.handle(request=request)
+    controller = controllers[request.state.service]
+    return await controller.handle(request)
 
 
 @app.post("/task/status")
@@ -60,8 +60,7 @@ async def get_presigned_url(
     key: str, s3_client: S3Client = Depends(Provide[ApplicationContainer.s3_client])
 ) -> str | None:
     """Проверка статуса задачи."""
-    presigned_url = await s3_client.get_presigned_url(key)
-    return presigned_url
+    return await s3_client.get_presigned_url(key)
 
 
 class UploadStatusRequest(BaseModel):

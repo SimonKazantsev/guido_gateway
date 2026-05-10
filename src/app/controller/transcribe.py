@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Request, Response
 from pydantic import BaseModel, HttpUrl
 import uuid
+from http import HTTPStatus
 from app.enum import TaskStatusesEnum
 from app.redis.redis import RedisClient
 from app.kafka.client import KafkaClient
@@ -23,7 +24,7 @@ class ProcessFileRequest(BaseModel):
 
 class ProcessFileResponse(BaseModel):
     presigned_url: str
-    task_id: uuid.UUID
+    task_id: str
 
 
 class TranscribeController(AbstractController):
@@ -32,7 +33,6 @@ class TranscribeController(AbstractController):
     def __init__(
         self, kafka_client: KafkaClient, redis_client: RedisClient, s3_client: S3Client
     ) -> None:
-        super().__init__()
         self._kafka_client = kafka_client
         self._redis_client = redis_client
         self._s3_client = s3_client
@@ -41,6 +41,7 @@ class TranscribeController(AbstractController):
         dispatch = {
             "process-link": self._process_link,
             "process-file": self._process_file,
+            "presigned_url": self._presigned_url,
         }
         handler = dispatch.get(request.state.path)
         if not handler:
@@ -66,15 +67,24 @@ class TranscribeController(AbstractController):
         )
         return JSONResponse(202, {"task_id": task_id, "status": "accepted"})
 
-    async def _process_file(self, request: ProcessFileRequest) -> ProcessFileResponse:
-        task_id = uuid.uuid4()
+    async def _process_file(self, request: Request):
+        task_id = str(uuid.uuid4())
         presigned_url = await self._s3_client.get_presigned_url(
-            task_id=task_id, key=request.filename
+            key=request.query_params.get('key')
         )
         self._redis_client.create_task(
             file_url=presigned_url,
-            user_id=request.user_id,
+            user_id=request.state.user_id,
             task_id=task_id,
             task_status=TaskStatusesEnum.awaiting_upload.value,
         )
         return ProcessFileResponse(presigned_url=presigned_url, task_id=task_id)
+
+    async def _presigned_url(self, request: Request):
+        key = request.query_params.get('key')
+        if not key:
+            return JSONResponse(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                content={"reason": HTTPStatus.UNPROCESSABLE_ENTITY.phrase}
+            )
+        return await self._s3_client.get_presigned_url(key=key)

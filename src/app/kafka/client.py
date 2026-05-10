@@ -6,13 +6,11 @@ from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 class KafkaClient:
     def __init__(
         self,
-        consumer: AIOKafkaConsumer,
-        producer: AIOKafkaProducer,
         config: KafkaConfig,
     ) -> None:
         self._config = config
-        self._consumer = consumer
-        self._producer = producer
+        self._consumer = AIOKafkaConsumer(bootstrap_servers=config.bootstrap_servers)
+        self._producer = AIOKafkaProducer(bootstrap_servers=config.bootstrap_servers)
 
     async def send_message(self, message_payload: dict) -> str:
         """Отправляет сообщение в очередь."""

@@ -52,13 +52,12 @@ EXCEPTION_TO_ERROR_CODE = {
 SERVICE: dict[str, str] = {
     "auth": "http://localhost:8001",  # /auth/* -> auth service
     "transcribe": "http://localhost:8002",
-    "file": "",  # /gateway
     "task": "",  # /gateway
 }
 PATHS = {
-    "transcribe": ["process-link", "process-file"],
+    "transcribe": ["s3-webhook", "process-link", "process-file", "presigned-url"],
     "auth": [
-        "login",
+        "login", 
         "logout",
         "register",
         "refresh",
@@ -67,14 +66,11 @@ PATHS = {
         "check-username",
         "sessions",
     ],
-    "file": [
-        "s3-webhook",
-        "presigned-url",
-    ],
     "task": [
         "cancel",
         "status",
     ],
+    "s3-webhook": [],
 }
 PUBLIC_PATHS = [
     "/",
