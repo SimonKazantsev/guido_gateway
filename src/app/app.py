@@ -15,6 +15,8 @@ container.init_resources()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    container = ApplicationContainer()
+    container.init_resources()
     yield
     container.shutdown_resources()
 
@@ -24,19 +26,16 @@ security = HTTPBearer()
 app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier())
 
 
-@inject
 @app.api_route("/{service}/{path:path}", methods=["POST"])
+@inject
 async def gateway(
     request: Request,
-    service: str,
-    path: str,
-    controllers: list[AbstractController] = Depends(
-        Provide[ApplicationContainer.controllers]
+    auth_controller: AbstractController = Depends(
+        Provide[ApplicationContainer.auth_controller]
     ),  # noqa: E501
 ):
     """Перенаправление запроса в соответствующий микросервис."""
-    controller = controllers[service]
-    return await controller.handle(request)
+    return await auth_controller.handle(request)
 
 
 @app.post("/task/status")

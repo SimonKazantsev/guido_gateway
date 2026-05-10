@@ -8,10 +8,11 @@ class AuthController(AbstractController):
     """Контроллер аутентификации."""
 
     async def handle(self, request: Request) -> Response:
+        print(f"{request.state.service}/{request.state.path}")
         async with httpx.AsyncClient() as client:
             response = await client.request(
                 method=request.method,
-                url=f"{SERVICE[request.state.service]}/{request.state.path}",
-                headers={"Authorization": f"Bearer {request.state.token}"},
+                url=f"{SERVICE[request.state.service]}/{request.state.service}/{request.state.path}",
+                #headers={"Authorization": f"Bearer {request.state.token}"},
             )
             return response.request

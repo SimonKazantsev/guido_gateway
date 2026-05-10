@@ -42,4 +42,3 @@ class ApplicationContainer(containers.DeclarativeContainer):
         AuthController,
         http_client,
     )
-    controllers = providers.List(auth_controller)

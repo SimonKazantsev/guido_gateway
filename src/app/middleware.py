@@ -12,6 +12,10 @@ class TokenMiddleware(BaseHTTPMiddleware):
         self._token_verifier = token_verifier
 
     async def dispatch(self, request, call_next):
+        parts = request.url.path.strip("/").split("/")
+        service, path = parts[0], "/".join(parts[1:])
+        request.state.service = service
+        request.state.path = path
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
@@ -21,7 +25,6 @@ class TokenMiddleware(BaseHTTPMiddleware):
                 status_code=HTTPStatus.NOT_FOUND,
                 content={"reason": "Invalid path format"},
             )
-        service, path = parts[0], "/".join(parts[1:])
         request.state.service = service
         request.state.path = path
 
