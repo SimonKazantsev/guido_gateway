@@ -46,33 +46,15 @@ class AuthController(AbstractController):
         return await self._handle_login(request, json)
 
     async def _handle_register(self, request: Request, json: dict):
-        async with httpx.AsyncClient() as client:
             try:
                 UserData(**json)
             except ValidationError:
                 return ValidationError
-            response = await client.request(
-                method=request.method,
-                url=f"{SERVICE[request.state.service]}/{request.state.service}/{request.state.path}",
-                json=json,
-            )   
-            return Response(
-                content=response.content,
-                status_code=response.status_code,
-            )
+            return await self._http_client.send_request(request, json)
     
     async def _handle_login(self, request: Request, json: dict):
-        async with httpx.AsyncClient() as client:
             try:
                 LoginRequest(**json)
-            except Exception:
+            except ValidationError:
                 return ValidationError
-            response = await client.request(
-                method=request.method,
-                url=f"{SERVICE[request.state.service]}/{request.state.service}/{request.state.path}",
-                json=json,
-            )   
-            return Response(
-                content=response.content,
-                status_code=response.status_code,
-            )
+            return await self._http_client.send_request(request, json)

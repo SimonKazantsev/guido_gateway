@@ -24,3 +24,12 @@ api gateway, перенаправляет запросы в микросерви
   "password": "PasswordUser1!"
 }
 ```
+
+*/auth/login Неверный пароль
+```json
+{
+  "fingerprint": "string",
+  "identifier": "user1",
+  "password": "PasswordUser1WRONG!"
+}
+```
