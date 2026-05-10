@@ -4,7 +4,7 @@ from app.middleware import TokenMiddleware
 from contextlib import asynccontextmanager
 from app.controller.abstract import AbstractController
 from dependency_injector.wiring import inject, Provide
-from fastapi import FastAPI, Request, Depends, Security
+from fastapi import FastAPI, Request, Depends, Security, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.containers import ApplicationContainer
 from app.s3.client.client import S3Client
@@ -22,23 +22,20 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 app.add_middleware(TokenMiddleware, token_verifier=container.token_verifier())
 
-
-@app.api_route("/{service}/{path:path}", methods=["POST"])
+@app.api_route("/{service:path}", methods=["POST"])
 @inject
 async def gateway(
     request: Request,
-    service: str, 
-    path: str,
-    json: dict,
     auth_controller: AbstractController = Depends(
         Provide[ApplicationContainer.auth_controller]
     ),  # noqa: E501
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     """Перенаправление запроса в соответствующий микросервис."""
-    return await auth_controller.handle(request=request, json=json)
+    return await auth_controller.handle(request=request)
 
 
 @app.post("/task/status")

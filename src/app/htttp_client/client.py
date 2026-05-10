@@ -11,8 +11,12 @@ class HTTPClient:
     def __init__(self, config: RetryConfig):
         self._retry_strategy = Retry(total=config.retry)
 
-    async def send_request(self, request: Request, json: dict,) -> Response:
+    async def send_request(self, request: Request) -> Response:
         """Отправка запроса."""
+        try:
+            json = await request.json()
+        except Exception:
+            json = None
         try:
             async with httpx.AsyncClient(
                 transport=RetryTransport(retry=self._retry_strategy)
@@ -21,6 +25,7 @@ class HTTPClient:
                     method=request.method,
                     url=f"{SERVICE[request.state.service]}/{request.state.service}/{request.state.path}",
                     json=json,
+                    params=request.query_params if request.query_params else None,
                 )
                 return Response(
                     content=response.content,

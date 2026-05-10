@@ -18,7 +18,6 @@ class TokenMiddleware(BaseHTTPMiddleware):
         request.state.path = path
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
-
         parts = request.url.path.strip("/").split("/")
         if len(parts) < 2:
             return JSONResponse(

@@ -40,21 +40,13 @@ class UserData(BaseModel):
 class AuthController(AbstractController):
     """Контроллер аутентификации."""
 
-    async def handle(self, request: Request, json: dict) -> Response:
+    async def handle(self, request: Request) -> Response:
         if request.state.path == 'register':
-            return await self._handle_register(request, json)
-        return await self._handle_login(request, json)
+            return await self._handle_register(request)
+        return await self._handle_login(request)
 
-    async def _handle_register(self, request: Request, json: dict):
-            try:
-                UserData(**json)
-            except ValidationError:
-                return ValidationError
-            return await self._http_client.send_request(request, json)
+    async def _handle_register(self, request: Request):
+            return await self._http_client.send_request(request)
     
-    async def _handle_login(self, request: Request, json: dict):
-            try:
-                LoginRequest(**json)
-            except ValidationError:
-                return ValidationError
-            return await self._http_client.send_request(request, json)
+    async def _handle_login(self, request: Request):
+        return await self._http_client.send_request(request)

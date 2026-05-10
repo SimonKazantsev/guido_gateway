@@ -65,6 +65,7 @@ PATHS = {
         "delete",
         "change-password",
         "check-username",
+        "sessions",
     ],
     "file": [
         "s3-webhook",

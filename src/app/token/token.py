@@ -26,7 +26,7 @@ class TokenVerifier:
         self._webhook_token = token_config.webhook_token
 
     def verify_token(self, token: str) -> dict[str, Any]:
-        return jwt.decode(token, key=self._key, algorithms=self._algorithm)
+        return jwt.decode(jwt=token, key=self._key, algorithms=self._algorithm)
 
     @property
     def webhook_token(self):
