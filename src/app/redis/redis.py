@@ -7,14 +7,6 @@ import uuid
 import time
 
 
-class RedisTask(BaseModel):
-    task_id: uuid.UUID
-    user_id: int
-    task_status: TaskStatusesEnum
-    frontend_callback_received: bool = False
-    ttl_seconds: int
-
-
 class RedisClient:
     """Клиент для Redis."""
 
@@ -26,7 +18,7 @@ class RedisClient:
         self,
         user_id: str,
         task_id: str,
-        file_url: str,
+        object_key: str,
         task_status: TaskStatusesEnum = TaskStatusesEnum.pending.value,
     ) -> None:
         """
@@ -38,14 +30,14 @@ class RedisClient:
             "user_id": user_id,
             "task_id": task_id,
             "status": task_status,
-            "file_url": file_url,
+            "object_key": object_key,
             "created_at": time.time(),
         }
 
         outbox_event = {
             "task_id": task_id,
             "user_id": user_id,
-            "file_url": file_url,
+            "object_key": object_key,
             "event_id": f"evt-{task_id}-{int(time.time() * 1000)}",
         }
 
@@ -54,14 +46,55 @@ class RedisClient:
         pipe.rpush("outbox", json.dumps(outbox_event))
         pipe.execute()
 
-    def get_task(self, task_id: str) -> RedisTask:
-        return self._redis.get(name=task_id)
+    def get_note(self, key: int) :
+        return self._redis.get(name=key)
 
-    def cancel_task(self, task_id: str) -> None:
+    def cancel_task(self, key: str) -> None:
         """Отмена задачи."""
-        task = json.loads(self._redis.get(task_id))
+        task = json.loads(self._redis.get(key))
         task["status"] = TaskStatusesEnum.cancelled.value
         self._redis.set(
-            name=task_id,
+            name=key,
             value=task,
         )
+
+    def update_task_status_with_outbox(
+            self,
+            task_id: str,
+            new_status: TaskStatusesEnum,
+        ) -> bool:
+            task_key = f"task:{task_id}"
+            
+            task_data_raw = self._redis.get(task_key)
+            
+            task_data = json.loads(task_data_raw)
+            old_status = task_data.get("status")
+            
+            # Обновляем данные задачи
+            task_data["status"] = new_status.value if hasattr(new_status, 'value') else new_status
+            task_data["updated_at"] = time.time()
+            
+            # Создаём событие в outbox
+            outbox_event = {
+                "task_id": task_id,
+                "user_id": task_data.get("user_id"),
+                "object_key": task_data.get("object_key"),
+                "old_status": old_status,
+                "new_status": new_status.value if hasattr(new_status, 'value') else new_status,
+                "event_id": f"status-update-{task_id}-{int(time.time() * 1000)}",
+                "event_type": "status_changed",
+            }
+            
+            # Атомарно обновляем задачу и добавляем в outbox
+            ttl = self._redis.ttl(task_key)
+            pipe = self._redis.pipeline()
+            
+            if ttl > 0:
+                pipe.setex(task_key, ttl, json.dumps(task_data))
+            else:
+                pipe.set(task_key, json.dumps(task_data))
+            
+            pipe.rpush("outbox", json.dumps(outbox_event))
+            pipe.execute()
+            
+            return True

@@ -41,7 +41,6 @@ class TranscribeController(AbstractController):
         dispatch = {
             "process-link": self._process_link,
             "process-file": self._process_file,
-            "presigned_url": self._presigned_url,
         }
         handler = dispatch.get(request.state.path)
         if not handler:
@@ -62,29 +61,23 @@ class TranscribeController(AbstractController):
             task_status=TaskStatusesEnum.pending,
         )
         await self._kafka_client.send_message(
-            self._kafka_client.process_link_topic,
+            self._kafka_client.preprocess_topic,
             message_payload,
         )
         return JSONResponse(202, {"task_id": task_id, "status": "accepted"})
 
     async def _process_file(self, request: Request):
+        object_key = request.query_params.get('key')
         task_id = str(uuid.uuid4())
         presigned_url = await self._s3_client.get_presigned_url(
-            key=request.query_params.get('key')
+            key=object_key,
+            task_id=task_id
         )
         self._redis_client.create_task(
-            file_url=presigned_url,
+            object_key=object_key,
             user_id=request.state.user_id,
             task_id=task_id,
             task_status=TaskStatusesEnum.awaiting_upload.value,
         )
         return ProcessFileResponse(presigned_url=presigned_url, task_id=task_id)
 
-    async def _presigned_url(self, request: Request):
-        key = request.query_params.get('key')
-        if not key:
-            return JSONResponse(
-                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                content={"reason": HTTPStatus.UNPROCESSABLE_ENTITY.phrase}
-            )
-        return await self._s3_client.get_presigned_url(key=key)

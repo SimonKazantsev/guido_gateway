@@ -77,13 +77,7 @@ async def fetch_upload_status(
     upload_status_request: UploadStatusRequest,
     redis_client: RedisClient = Depends(Provide[ApplicationContainer.redis_client]),
 ):
-    task = redis_client.get_task(upload_status_request.task_id)
+    task = redis_client.get_note(upload_status_request.task_id)
     if task.user_id != request.state.user_id:
         return
 
-
-@app.post("/file/s3-webhook")
-async def process_webhook(
-    request: Request, credentials: HTTPAuthorizationCredentials = Security(security)
-):
-    print(await request.json())

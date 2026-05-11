@@ -1,7 +1,8 @@
-from app.config import load_config, RedisConfig
+from app.config import load_config, RedisConfig, KafkaConfig
 from app.redis.redis import RedisClient
 from redis import StrictRedis
 from app.kafka.client import KafkaClient
+from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from functools import partial
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
@@ -18,15 +19,17 @@ load_dotenv()
 class ApplicationContainer(containers.DeclarativeContainer):
     """Контейнер с различными зависимостями приложения."""
 
-    def prepare_redis(config: RedisConfig): 
-        _redis = StrictRedis(host=config.host, port=config.port)
-        return _redis
-
     config = load_config()
 
     wiring_config = containers.WiringConfiguration(packages=["app"])
 
-    kafka_client = providers.Resource(KafkaClient, config.kafka)
+    _producer = providers.Resource(lambda: AIOKafkaProducer(bootstrap_servers='localhost:9092'))
+
+    kafka_client = providers.Resource(
+        KafkaClient,
+        config.kafka,
+        _producer,
+    )
 
     http_client = providers.Resource(HTTPClient, config.retry_strategy)
 
@@ -59,7 +62,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     webhook_controller = providers.Resource(
         WebhookController,
-        http_client
+        kafka_client,
+        redis_client,
+        http_client,
     )
     
     controllers = providers.Dict(

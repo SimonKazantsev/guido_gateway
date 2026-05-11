@@ -47,7 +47,7 @@ class S3Client:
                 async with aiofiles.open(key, "wb") as file:
                     await file.write(data)
 
-    async def get_presigned_url(self, key: str) -> str | None:
+    async def get_presigned_url(self, key: str, task_id: str) -> str | None:
         """Получить ссылку за прямой загрузки файла в хранилище."""
         async with self._get_client() as client:
             presigned_url = await client.generate_presigned_url(
@@ -55,7 +55,11 @@ class S3Client:
                 Params={
                     "Bucket": self._config.bucket_name,
                     "Key": key,
+                    "Metadata": {
+                        "task_id": task_id 
+                    },
                 },
+                HttpMethod='PUT',
                 ExpiresIn=self._config.presigned_url_expires_seconds,
             )
             return presigned_url

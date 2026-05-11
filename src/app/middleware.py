@@ -12,7 +12,6 @@ class TokenMiddleware(BaseHTTPMiddleware):
         self._token_verifier = token_verifier
 
     async def dispatch(self, request, call_next):
-        print(request)
         if request.url.path == "/s3-webhook":
             auth_header = request.headers.get("Authorization")
             if not auth_header or not auth_header.startswith("Bearer "):

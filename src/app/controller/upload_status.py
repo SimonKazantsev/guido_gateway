@@ -24,7 +24,7 @@ class UploadStatusController:
     async def handle(
         self, request: Request, upload_status_request: UploadStatusRequest
     ):
-        task = self._redis_client.get_task(upload_status_request.task_id)
+        task = self._redis_client.get_note(upload_status_request.task_id)
         if task.user_id != request.state.user_id:
             return JSONResponse(
                 status_code=HTTPStatus.FORBIDDEN,
