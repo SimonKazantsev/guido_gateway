@@ -1,9 +1,8 @@
-from app.config import load_config, RedisConfig, KafkaConfig
+from app.config import load_config
 from app.redis.redis import RedisClient
 from redis import StrictRedis
 from app.kafka.client import KafkaClient
-from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
-from functools import partial
+from aiokafka import AIOKafkaProducer
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
 from app.token.token import TokenVerifier

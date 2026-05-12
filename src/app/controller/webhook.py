@@ -27,8 +27,6 @@ class WebhookController(AbstractController):
             topic=self._kafka_client.preprocess_topic,
             message_payload=payload,
         )
-        print('im here, after sending_kafka_messages')
-
     async def extract_object_key_from_request(self, request: Request):
         return json.loads(await request.body())['Records'][0]['s3']['object']['key']
 
